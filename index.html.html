@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Çalışma Planım</title>
+<style>
+:root{--bg:#f2f6f8;--card:#fff;--ink:#1c2a34;--mute:#5b6b76;--line:#d3dde4;--acc:#0f766e;--accfg:#fff;--warn:#b45309;--soft:#e2f1ef;color-scheme:light;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#10181d;--card:#18232a;--ink:#e6eef2;--mute:#9db0bb;--line:#2b3b45;--acc:#2dd4bf;--accfg:#06201d;--warn:#fbbf24;--soft:#143530;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#10181d;--card:#18232a;--ink:#e6eef2;--mute:#9db0bb;--line:#2b3b45;--acc:#2dd4bf;--accfg:#06201d;--warn:#fbbf24;--soft:#143530;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 "Segoe UI",system-ui,-apple-system,Roboto,sans-serif}
+main{max-width:640px;margin:0 auto;padding:20px 16px 48px}
+h1{font-size:26px;margin:8px 0 4px}
+h2{font-size:19px;margin:0 0 10px}
+.sub{color:var(--mute);margin:0 0 20px}
+section{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:16px}
+label{display:block;font-size:14px;color:var(--mute);margin:10px 0 4px}
+input,select{width:100%;padding:10px;font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:6px}
+input[type=checkbox]{width:auto;margin-right:8px}
+.chk{display:flex;align-items:center;color:var(--ink);font-size:16px;margin:12px 0}
+button{font:inherit;cursor:pointer;border-radius:6px;padding:10px 14px;border:1px solid var(--acc);background:var(--acc);color:var(--accfg);margin-top:12px;width:100%}
+button.ghost{background:transparent;color:var(--mute);border-color:var(--line);width:auto;margin:0;padding:4px 10px;font-size:14px}
+:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+.item{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-top:1px solid var(--line)}
+.item:first-of-type{border-top:0}
+.item input{margin-top:5px;width:20px;height:20px}
+.item .t{flex:1}
+.why{font-size:14px;color:var(--mute)}
+.tag{color:var(--warn);font-weight:600}
+.done{text-decoration:line-through;opacity:.55}
+.empty{color:var(--mute);margin:0}
+.course{font-weight:600;margin:14px 0 2px}
+.bar{height:8px;background:var(--line);border-radius:4px;overflow:hidden;margin:6px 0 4px}
+.bar i{display:block;height:100%;background:var(--acc)}
+.timer{font-size:48px;font-weight:700;font-variant-numeric:tabular-nums;margin:4px 0}
+.ph{padding:8px 0;border-top:1px solid var(--line)}
+.ph.now{font-weight:600;color:var(--acc)}
+textarea{width:100%;min-height:90px;padding:10px;font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:6px}
+.alert{border-color:var(--warn)}
+.alert p{margin:0;color:var(--warn);font-weight:600}
+</style>
+</head>
+<body>
+<main>
+<h1>Çalışma Planım</h1>
+<p class="sub">Dersini ve konularını ekle. Uygulama sana bugün neyi çalışacağını sıraya koyar.</p>
+
+<section id="alr" class="alert" hidden><p id="alt"></p></section>
+
+<section>
+  <h2>Genel durum</h2>
+  <div class="bar"><i id="gbar" style="width:0%"></i></div>
+  <p class="why" id="gtxt"></p>
+  <p class="why" id="strk"></p>
+  <div id="phases"></div>
+</section>
+
+<section>
+  <h2>Bugün ne çalışmalıyım?</h2>
+  <label for="hours">Bugün kaç saat çalışabilirsin?</label>
+  <select id="hours" onchange="setHours(this.value)">
+    <option value="0">Dinlenme (0 saat)</option><option value="1">1 saat</option><option value="2">2 saat</option><option value="3">3 saat</option>
+    <option value="4">4 saat</option><option value="5">5 saat</option><option value="6">6 saat</option>
+  </select>
+  <label for="mode">Nasıl çalışmak istiyorsun?</label>
+  <select id="mode" onchange="setMode(this.value)">
+    <option value="auto">Otomatik (final tarihine göre)</option>
+    <option value="bastan">Eksikleri kapat (baştan sırayla)</option>
+    <option value="final">Finale hazırlan (önemli konular önce)</option>
+  </select>
+  <p class="why" id="mnote" style="margin-top:8px"></p>
+  <p class="why" id="blk"></p>
+  <div id="plan"></div>
+</section>
+
+<section>
+  <h2>Tekrar zamanı</h2>
+  <p class="why">Bitirdiğin konuyu 3, 7 ve 14 gün sonra tekrar edersen unutmazsın.</p>
+  <div id="rev"></div>
+</section>
+
+<section>
+  <h2>Odak sayacı</h2>
+  <div class="timer" id="tm">50:00</div>
+  <p class="why" id="tl">Çalışma bloğu, 50 dakika</p>
+  <button onclick="startT()">Başlat / duraklat</button>
+  <div><button class="ghost" style="margin-top:10px" onclick="resetT()">Sıfırla</button></div>
+</section>
+
+<section>
+  <h2>Haftalık çalışma saatlerim</h2>
+  <p class="why">Her gün kaç saat çalışabileceğini seç. 0 saat, dinlenme günü demek.</p>
+  <div id="wk"></div>
+</section>
+
+<section>
+  <h2>1. Ders ekle</h2>
+  <label for="cn">Dersin adı</label>
+  <input id="cn" placeholder="Örnek: Mantık Devreleri">
+  <label for="cd">Final tarihi</label>
+  <input id="cd" type="date">
+  <button onclick="addCourse()">Dersi ekle</button>
+</section>
+
+<section>
+  <h2>2. Konu ekle</h2>
+  <label for="tc">Hangi ders?</label>
+  <select id="tc"></select>
+  <label for="tn">Konunun adı</label>
+  <input id="tn" placeholder="Örnek: Boolean cebiri">
+  <label for="tt">Not (isteğe bağlı)</label>
+  <input id="tt" placeholder="Örnek: Slayt 12-30, ödev 3">
+  <label for="td">Konu sana ne kadar zor?</label>
+  <select id="td"><option value="1">Kolay</option><option value="2" selected>Orta</option><option value="3">Zor</option></select>
+  <label class="chk"><input id="tf" type="checkbox" checked>Bu konu finale dahil</label>
+  <button onclick="addTopic()">Konuyu ekle</button>
+</section>
+
+<section>
+  <h2>Tüm derslerim</h2>
+  <div id="all"></div>
+</section>
+
+<section>
+  <h2>Yedekle ve geri yükle</h2>
+  <p class="why">Verini başka cihaza taşımak için yedeği kopyala. Diğer cihazda kutuya yapıştırıp geri yükle.</p>
+  <textarea id="bk" aria-label="Yedek"></textarea>
+  <button onclick="bkShow()">Yedeği göster</button>
+  <button onclick="bkLoad()">Geri yükle</button>
+  <div><button class="ghost" id="rst" style="margin-top:12px" onclick="resetAll()">Her şeyi sil</button></div>
+  <p class="why" id="bkm"></p>
+</section>
+</main>
+
+<script>
+var S={courses:[],topics:[],hours:3,mode:'auto'};
+try{var r=localStorage.getItem('calisma-plani');if(r)S=JSON.parse(r)}catch(e){}
+function save(){try{localStorage.setItem('calisma-plani',JSON.stringify(S))}catch(e){}}
+function $(i){return document.getElementById(i)}
+function esc(t){return String(t).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+function daysLeft(d){if(!d)return 30;return Math.max(0,Math.ceil((new Date(d)-new Date())/864e5))}
+function course(id){return S.courses.filter(function(c){return c.id==id})[0]}
+function score(t){var c=course(t.courseId);return(t.inFinal?100:30)+t.diff*8+Math.max(0,40-daysLeft(c&&c.exam))}
+function setHours(v){S.hours=+v;S.week=S.week||[];S.week[new Date().getDay()]=+v;save();render()}
+function setMode(v){S.mode=v;save();render()}
+function curMode(){var m=S.mode||'auto';if(m!='auto')return m;var ds=S.courses.map(function(c){return c.exam?daysLeft(c.exam):99});var mn=ds.length?Math.min.apply(null,ds):99;return mn>21?'bastan':'final'}
+function pickTodo(blocks){var open=S.topics.filter(function(t){return!t.done});
+  if(curMode()=='final')return open.sort(function(a,b){return score(b)-score(a)}).slice(0,blocks);
+  var rk={},cnt={};S.topics.forEach(function(t){cnt[t.courseId]=cnt[t.courseId]||0;rk[t.id]=cnt[t.courseId]++});
+  return open.sort(function(a,b){return rk[a.id]-rk[b.id]||b.diff-a.diff}).slice(0,blocks)}
+function addCourse(){var n=$('cn').value.trim();if(!n)return;S.courses.push({id:Date.now(),name:n,exam:$('cd').value});$('cn').value='';save();render()}
+function addTopic(){var n=$('tn').value.trim();if(!n||!S.courses.length)return;
+  S.topics.push({id:Date.now(),courseId:$('tc').value,name:n,diff:+$('td').value,inFinal:$('tf').checked,done:false,note:$('tt').value.trim()});$('tt').value='';
+  $('tn').value='';save();render()}
+function toggle(id){S.topics.forEach(function(t){if(t.id==id){t.done=!t.done;if(t.done){t.doneAt=Date.now();t.revDone=0;bump(1)}else{delete t.doneAt;bump(-1)}}});save();render()}
+var GAP=[3,7,14];
+function dk(d){d=d||new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate()}
+function bump(n){S.days=S.days||{};var k=dk();S.days[k]=Math.max(0,(S.days[k]||0)+n)}
+function streak(){var d=new Date(),n=0;S.days=S.days||{};if(!S.days[dk(d)])d.setDate(d.getDate()-1);while(S.days[dk(d)]>0){n++;d.setDate(d.getDate()-1)}return n}
+function todayH(){var w=(S.week||[])[new Date().getDay()];return w==null?S.hours:w}
+function setWeek(i,v){S.week=S.week||[];S.week[i]=+v;if(i==new Date().getDay())S.hours=+v;save();render()}
+function bkShow(){$('bk').value=JSON.stringify(S);$('bkm').textContent='Yedek hazır. Kutudaki yazıyı tamamen kopyala.'}
+function bkLoad(){try{var o=JSON.parse($('bk').value);if(!o.courses||!o.topics)throw 0;S=o;save();render();$('bkm').textContent='Yedek yüklendi.'}catch(e){$('bkm').textContent='Yedek okunamadı. Yazının tamamını yapıştırdığından emin ol.'}}
+var rc=false;
+function resetAll(){if(!rc){rc=true;$('rst').textContent='Emin misin? Silmek için tekrar bas';return}S={courses:[],topics:[],hours:3,mode:'auto',week:[],days:{}};rc=false;$('rst').textContent='Her şeyi sil';save();render()}
+function revDue(t){if(!t.done||!t.doneAt||(t.revDone||0)>=3)return false;return Date.now()>=t.doneAt+GAP[t.revDone||0]*864e5}
+function revOk(id){S.topics.forEach(function(t){if(t.id==id){t.revDone=(t.revDone||0)+1;bump(1)}});save();render()}
+var tl=3000,tid=null,brk=false;
+function fmt(){var m=Math.floor(tl/60),s=tl%60;$('tm').textContent=(m<10?'0':'')+m+':'+(s<10?'0':'')+s}
+function startT(){if(tid){clearInterval(tid);tid=null;return}tid=setInterval(function(){tl--;if(tl<=0){brk=!brk;tl=brk?600:3000;$('tl').textContent=brk?'Mola zamanı, 10 dakika dinlen':'Çalışma bloğu, 50 dakika';try{if(navigator.vibrate)navigator.vibrate(300)}catch(e){}}fmt()},1000)}
+function resetT(){clearInterval(tid);tid=null;brk=false;tl=3000;$('tl').textContent='Çalışma bloğu, 50 dakika';fmt()}
+function drawExtra(){
+ var n=S.topics.length,d=S.topics.filter(function(t){return t.done}).length,p=n?Math.round(d*100/n):0;
+ $('gbar').style.width=p+'%';$('gtxt').textContent=n?('Toplam '+n+' konunun '+d+' tanesi bitti (%'+p+')'):'Henüz konu eklemedin.';
+ var ex=S.courses.filter(function(c){return c.exam}).map(function(c){return new Date(c.exam)}).sort(function(a,b){return a-b})[0];
+ if(!ex){$('phases').innerHTML='<p class="empty">Plan görmek için bir derse final tarihi ekle.</p>'}
+ else{var D=864e5,dl=Math.ceil((ex-new Date())/D),f=function(x){return new Date(x).toLocaleDateString('tr-TR',{day:'numeric',month:'long'})},cur=dl>21?0:dl>7?1:2,
+  P=[['Eksikleri kapat','bugün – '+f(+ex-21*D)],['Finale hazırlan',f(+ex-21*D)+' – '+f(+ex-7*D)],['Son tekrar ve soru çözme',f(+ex-7*D)+' – '+f(+ex)]];
+  $('phases').innerHTML='<p class="why">En yakın final: '+f(+ex)+' ('+Math.max(0,dl)+' gün kaldı)</p>'+P.map(function(x,i){return'<div class="ph'+(i==cur?' now':'')+'"><div>'+(i+1)+'. '+x[0]+(i==cur?' (şimdi buradasın)':'')+'</div><div class="why">'+x[1]+'</div></div>'}).join('')}
+ var sk=streak();$('strk').textContent=sk?'Seri: '+sk+' gün üst üste çalıştın':'Bugün bir konu bitirirsen seri başlar.';
+ var nx=S.courses.filter(function(c){return c.exam}).map(function(c){return{n:c.name,d:daysLeft(c.exam)}}).sort(function(a,b){return a.d-b.d})[0],al=$('alr');
+ if(nx&&nx.d<=14){al.hidden=false;$('alt').textContent=nx.n+' finaline '+nx.d+' gün kaldı. '+(nx.d<=7?'Yeni konu başlama, tekrar yap ve soru çöz.':'Finale dahil konulara öncelik ver.')}else al.hidden=true;
+ var DN=['Pazar','Pazartesi','Salı','Çarşamba','Perşembe','Cuma','Cumartesi'],td=new Date().getDay(),wk='';
+ [1,2,3,4,5,6,0].forEach(function(i){var v=(S.week||[])[i];if(v==null)v=S.hours;wk+='<div class="ph'+(i==td?' now':'')+'"><div>'+DN[i]+(i==td?' (bugün)':'')+'</div><select aria-label="'+DN[i]+'" onchange="setWeek('+i+',this.value)">'+[0,1,2,3,4,5,6].map(function(x){return'<option value="'+x+'"'+(x==v?' selected':'')+'>'+x+' saat</option>'}).join('')+'</select></div>'});
+ $('wk').innerHTML=wk;
+ var rv=S.topics.filter(revDue);
+ $('rev').innerHTML=rv.length?rv.map(function(t){var c=course(t.courseId);return'<div class="item"><input type="checkbox" aria-label="Tekrar ettim" onchange="revOk('+t.id+')"><div class="t">'+esc(c?c.name:'')+': '+esc(t.name)+'<div class="why">'+(t.revDone||0)+'/3 tekrar yapıldı</div></div></div>'}).join(''):'<p class="empty">Bugün tekrar edecek konu yok.</p>';
+}
+function delTopic(id){S.topics=S.topics.filter(function(t){return t.id!=id});save();render()}
+function delCourse(id){S.courses=S.courses.filter(function(c){return c.id!=id});S.topics=S.topics.filter(function(t){return t.courseId!=id});save();render()}
+function why(t){var c=course(t.courseId),d=daysLeft(c&&c.exam),s=[];
+  s.push(t.inFinal?'<span class="tag">Finale dahil</span>':(curMode()=='final'?'Eksik konu, sonra kapat':'Eksik konu'));
+  if(c&&c.exam)s.push('final '+d+' gün sonra');
+  s.push(['','kolay','orta','zor'][t.diff]);if(t.note)s.push(esc(t.note));return s.join(' · ')}
+function render(){
+  $('hours').value=todayH();$('mode').value=S.mode||'auto';drawExtra();
+  $('mnote').textContent=curMode()=='bastan'?'Final uzak. Her dersin konularını baştan sırayla çalışıp eksiklerini kapatırsın.':'Final yakın. Önce finale dahil ve zor konular gelir.';
+  var sel=$('tc'),cur=sel.value;
+  sel.innerHTML=S.courses.length?S.courses.map(function(c){return'<option value="'+c.id+'">'+esc(c.name)+'</option>'}).join(''):'<option value="">Önce bir ders ekle</option>';
+  if(cur)sel.value=cur;
+  var h=todayH(),blocks=Math.floor(h*60/50);
+  $('blk').textContent=h?h+' saat = '+blocks+' blok (her blok 50 dk çalış, 10 dk mola)':'Bugün dinlenme günü. Dinlenmek de planın parçası.';
+  var todo=pickTodo(blocks);
+  $('plan').innerHTML=todo.length?todo.map(function(t,i){var c=course(t.courseId);
+    return'<div class="item"><input type="checkbox" aria-label="Bitti" onchange="toggle('+t.id+')"><div class="t"><div>'+(i+1)+'. '+esc(c?c.name:'')+': '+esc(t.name)+'</div><div class="why">'+why(t)+'</div></div></div>'}).join(''):'<p class="empty">'+(S.topics.length?(blocks?'Hepsi bitti, harika!':'Bugün dinlenme günü.'):'Henüz konu yok. Aşağıdan ders ve konu ekle.')+'</p>';
+  $('all').innerHTML=S.courses.length?S.courses.map(function(c){
+    var ts=S.topics.filter(function(t){return t.courseId==c.id}),dn=ts.filter(function(t){return t.done}).length,p=ts.length?Math.round(dn*100/ts.length):0;
+    return'<div class="course">'+esc(c.name)+' <button class="ghost" onclick="delCourse('+c.id+')">Dersi sil</button></div>'
+     +'<div class="why">'+(c.exam?'Final: '+c.exam+' ('+daysLeft(c.exam)+' gün kaldı) · ':'')+dn+'/'+ts.length+' konu bitti</div>'
+     +'<div class="bar"><i style="width:'+p+'%"></i></div>'
+     +ts.map(function(t){return'<div class="item"><input type="checkbox" aria-label="Bitti" '+(t.done?'checked':'')+' onchange="toggle('+t.id+')"><div class="t '+(t.done?'done':'')+'">'+esc(t.name)+'<div class="why">'+(t.inFinal?'Finale dahil':'Finale dahil değil')+(t.note?' · '+esc(t.note):'')+'</div></div><button class="ghost" onclick="delTopic('+t.id+')">Sil</button></div>'}).join('')
+  }).join(''):'<p class="empty">Henüz ders yok. Yukarıdan ilk dersini ekle.</p>';
+}
+render();
+</script>
+</body>
+</html>
